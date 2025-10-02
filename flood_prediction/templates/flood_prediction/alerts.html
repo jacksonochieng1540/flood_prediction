@@ -1,0 +1,291 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Alerts Management - Flood Prediction System{% endblock %}
+{% block page_title %}Alerts Management{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-toolbar">
+    <div class="btn-group me-2">
+        <a href="{% url 'index' %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Alerts
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ alert_stats.total }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-bell fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Active Alerts
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ alert_stats.active }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Resolved Alerts
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ alert_stats.resolved }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Critical Alerts
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ alert_stats.critical }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-skull-crossbones fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-select">
+                    <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="resolved" {% if current_filters.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                    <option value="all" {% if current_filters.status == 'all' %}selected{% endif %}>All Statuses</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="severity" class="form-label">Severity</label>
+                <select name="severity" id="severity" class="form-select">
+                    <option value="">All Severities</option>
+                    <option value="low" {% if current_filters.severity == 'low' %}selected{% endif %}>Low</option>
+                    <option value="moderate" {% if current_filters.severity == 'moderate' %}selected{% endif %}>Moderate</option>
+                    <option value="high" {% if current_filters.severity == 'high' %}selected{% endif %}>High</option>
+                    <option value="critical" {% if current_filters.severity == 'critical' %}selected{% endif %}>Critical</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'alerts_dashboard' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Alerts Table -->
+<div class="card shadow">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <h6 class="m-0 font-weight-bold text-primary">Alerts List</h6>
+        <span class="badge bg-primary">{{ alerts.count }} alerts</span>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Message</th>
+                        <th>Area</th>
+                        <th>Created</th>
+                        <th>Duration</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for alert in alerts %}
+                    <tr class="alert-{{ alert.severity }}">
+                        <td>{{ alert.id }}</td>
+                        <td>{{ alert.get_alert_type_display }}</td>
+                        <td>
+                            <span class="badge bg-{{ alert.severity }}">
+                                {{ alert.get_severity_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge 
+                                {% if alert.status == 'active' %}bg-warning
+                                {% elif alert.status == 'resolved' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ alert.get_status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <small>{{ alert.message|truncatewords:10 }}</small>
+                        </td>
+                        <td>{{ alert.affected_area|truncatewords:3 }}</td>
+                        <td>{{ alert.created_at|date:"M d, H:i" }}</td>
+                        <td>
+                            <small class="text-muted">
+                                {% if alert.resolved_at %}
+                                {{ alert.duration }}
+                                {% else %}
+                                Ongoing
+                                {% endif %}
+                            </small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                {% if alert.status == 'active' and user.is_authenticated %}
+                                <button class="btn btn-outline-success resolve-alert" 
+                                        data-alert-id="{{ alert.id }}"
+                                        title="Resolve Alert">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                {% endif %}
+                                <a href="{% url 'prediction_detail' alert.prediction.id %}" 
+                                   class="btn btn-outline-primary" title="View Prediction">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="fas fa-bell-slash fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No alerts found</p>
+                            {% if current_filters.status != 'all' %}
+                            <a href="?status=all" class="btn btn-primary">Show All Alerts</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+{% if user.is_authenticated %}
+<div class="card shadow mt-4">
+    <div class="card-body">
+        <h6 class="card-title">Bulk Actions</h6>
+        <div class="btn-group">
+            <button class="btn btn-outline-success" id="resolveAllActive">
+                <i class="fas fa-check-double me-1"></i>Resolve All Active Alerts
+            </button>
+            <button class="btn btn-outline-secondary" id="exportAlerts">
+                <i class="fas fa-download me-1"></i>Export Alerts
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Resolve individual alert
+    document.querySelectorAll('.resolve-alert').forEach(button => {
+        button.addEventListener('click', function() {
+            const alertId = this.getAttribute('data-alert-id');
+            if (confirm('Are you sure you want to resolve this alert?')) {
+                resolveAlert(alertId);
+            }
+        });
+    });
+
+    // Resolve all active alerts
+    document.getElementById('resolveAllActive').addEventListener('click', function() {
+        if (confirm('Are you sure you want to resolve all active alerts?')) {
+            // This would typically make an API call to resolve all alerts
+            alert('Bulk resolve functionality would be implemented here');
+        }
+    });
+
+    // Export alerts
+    document.getElementById('exportAlerts').addEventListener('click', function() {
+        alert('Export functionality would be implemented here');
+    });
+
+    function resolveAlert(alertId) {
+        fetch(`/alerts/${alertId}/resolve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ status: 'resolved' })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Reload to show updated status
+            } else {
+                alert('Error resolving alert: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error resolving alert');
+        });
+    }
+
+    // Auto-submit form when filters change
+    document.getElementById('status').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    document.getElementById('severity').addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %}

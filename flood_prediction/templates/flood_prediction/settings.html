@@ -1,0 +1,383 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}System Settings - Flood Prediction System{% endblock %}
+{% block page_title %}System Settings{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-toolbar">
+    <div class="btn-group me-2">
+        <a href="{% url 'index' %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Model Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-brain me-2"></i>Model Configuration
+                </h6>
+                <span class="badge bg-info">{{ predictor.model_version }}</span>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'system_settings' %}">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="setting_model_confidence_threshold" class="form-label">
+                                Confidence Threshold
+                            </label>
+                            <input type="range" class="form-range" id="setting_model_confidence_threshold" 
+                                   name="setting_model_confidence_threshold" min="0.5" max="0.95" step="0.05" value="0.8">
+                            <div class="form-text">
+                                Minimum confidence level required for high-risk predictions
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="setting_alert_threshold" class="form-label">
+                                Alert Threshold
+                            </label>
+                            <input type="range" class="form-range" id="setting_alert_threshold" 
+                                   name="setting_alert_threshold" min="0.5" max="0.9" step="0.05" value="0.7">
+                            <div class="form-text">
+                                Flood probability threshold for automatic alert generation
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="setting_retrain_frequency" class="form-label">
+                                Retrain Frequency (days)
+                            </label>
+                            <select class="form-select" id="setting_retrain_frequency" name="setting_retrain_frequency">
+                                <option value="7">Weekly</option>
+                                <option value="30" selected>Monthly</option>
+                                <option value="90">Quarterly</option>
+                                <option value="180">Semi-Annually</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="setting_prediction_history_days" class="form-label">
+                                Keep Prediction History (days)
+                            </label>
+                            <select class="form-select" id="setting_prediction_history_days" name="setting_prediction_history_days">
+                                <option value="30">30 days</option>
+                                <option value="90" selected>90 days</option>
+                                <option value="180">180 days</option>
+                                <option value="365">1 year</option>
+                                <option value="0">Keep forever</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Model Features</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="setting_use_weather_data" 
+                                   name="setting_use_weather_data" checked>
+                            <label class="form-check-label" for="setting_use_weather_data">
+                                Include weather forecast data
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="setting_use_historical_data" 
+                                   name="setting_use_historical_data" checked>
+                            <label class="form-check-label" for="setting_use_historical_data">
+                                Include historical flood patterns
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="setting_use_terrain_data" 
+                                   name="setting_use_terrain_data">
+                            <label class="form-check-label" for="setting_use_terrain_data">
+                                Include detailed terrain analysis
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>Save Model Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Alert Settings -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-warning">
+                    <i class="fas fa-bell me-2"></i>Alert Configuration
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'system_settings' %}">
+                    {% csrf_token %}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="setting_email_alerts" class="form-label">Email Notifications</label>
+                            <select class="form-select" id="setting_email_alerts" name="setting_email_alerts">
+                                <option value="all">All alerts</option>
+                                <option value="high_critical" selected>High and Critical only</option>
+                                <option value="critical">Critical only</option>
+                                <option value="none">No email alerts</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="setting_sms_alerts" class="form-label">SMS Notifications</label>
+                            <select class="form-select" id="setting_sms_alerts" name="setting_sms_alerts">
+                                <option value="critical" selected>Critical only</option>
+                                <option value="high_critical">High and Critical</option>
+                                <option value="none">No SMS alerts</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Alert Channels</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="setting_web_alerts" 
+                                   name="setting_web_alerts" checked>
+                            <label class="form-check-label" for="setting_web_alerts">
+                                Web dashboard notifications
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="setting_mobile_alerts" 
+                                   name="setting_mobile_alerts">
+                            <label class="form-check-label" for="setting_mobile_alerts">
+                                Mobile app push notifications
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="setting_api_alerts" 
+                                   name="setting_api_alerts">
+                            <label class="form-check-label" for="setting_api_alerts">
+                                External API notifications
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="setting_alert_retention_days" class="form-label">
+                            Alert Retention Period (days)
+                        </label>
+                        <input type="number" class="form-control" id="setting_alert_retention_days" 
+                               name="setting_alert_retention_days" value="30" min="7" max="365">
+                    </div>
+
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-bell me-1"></i>Save Alert Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- System Maintenance -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">
+                    <i class="fas fa-cogs me-2"></i>System Maintenance
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-info" id="clearCacheBtn">
+                                <i class="fas fa-broom me-1"></i>Clear System Cache
+                            </button>
+                            <small class="form-text text-muted">Clear temporary files and cached data</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-info" id="optimizeDbBtn">
+                                <i class="fas fa-database me-1"></i>Optimize Database
+                            </button>
+                            <small class="form-text text-muted">Improve database performance</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'export_predictions_csv' %}" class="btn btn-outline-success">
+                                <i class="fas fa-download me-1"></i>Export All Data
+                            </a>
+                            <small class="form-text text-muted">Download complete prediction history</small>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-outline-danger" id="resetSettingsBtn">
+                                <i class="fas fa-undo me-1"></i>Reset to Defaults
+                            </button>
+                            <small class="form-text text-muted">Restore all default settings</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Information -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-success">
+                    <i class="fas fa-info-circle me-2"></i>System Information
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><strong>System Version</strong></td>
+                                <td>1.0.0</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Model Version</strong></td>
+                                <td>{{ predictor.model_version }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Predictions</strong></td>
+                                <td>{{ total_predictions }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Active Alerts</strong></td>
+                                <td>{{ active_alerts_count }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td><strong>Last Model Update</strong></td>
+                                <td>{{ last_model_update|default:"Never" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Database Size</strong></td>
+                                <td>{{ db_size|default:"Unknown" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>System Uptime</strong></td>
+                                <td>{{ uptime|default:"Unknown" }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Last Backup</strong></td>
+                                <td>{{ last_backup|default:"Never" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <a href="{% url 'health_check' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-heartbeat me-1"></i>System Health Check
+                    </a>
+                    <a href="{% url 'retrain_model' %}" class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-sync-alt me-1"></i>Retrain Model Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Maintenance buttons
+    document.getElementById('clearCacheBtn').addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear the system cache?')) {
+            showMaintenanceMessage('Clearing cache...', 'info');
+            // Simulate API call
+            setTimeout(() => {
+                showMaintenanceMessage('Cache cleared successfully!', 'success');
+            }, 2000);
+        }
+    });
+
+    document.getElementById('optimizeDbBtn').addEventListener('click', function() {
+        if (confirm('This will optimize the database for better performance. Continue?')) {
+            showMaintenanceMessage('Optimizing database...', 'info');
+            // Simulate API call
+            setTimeout(() => {
+                showMaintenanceMessage('Database optimized successfully!', 'success');
+            }, 3000);
+        }
+    });
+
+    document.getElementById('resetSettingsBtn').addEventListener('click', function() {
+        if (confirm('This will reset all settings to their default values. This action cannot be undone. Continue?')) {
+            showMaintenanceMessage('Resetting settings...', 'warning');
+            // Simulate API call
+            setTimeout(() => {
+                showMaintenanceMessage('Settings reset successfully! Page will reload...', 'success');
+                setTimeout(() => location.reload(), 2000);
+            }, 2000);
+        }
+    });
+
+    function showMaintenanceMessage(message, type) {
+        // Remove existing messages
+        const existingAlert = document.querySelector('.maintenance-alert');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // Create new alert
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show maintenance-alert`;
+        alert.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Insert at the top of the content
+        const content = document.querySelector('main .container-fluid');
+        content.insertBefore(alert, content.firstChild);
+    }
+
+    // Range input value display
+    const rangeInputs = document.querySelectorAll('input[type="range"]');
+    rangeInputs.forEach(input => {
+        const valueDisplay = document.createElement('div');
+        valueDisplay.className = 'range-value text-primary fw-bold';
+        valueDisplay.textContent = input.value;
+        input.parentNode.insertBefore(valueDisplay, input.nextSibling);
+
+        input.addEventListener('input', function() {
+            valueDisplay.textContent = this.value;
+        });
+    });
+});
+</script>
+
+<style>
+.range-value {
+    text-align: center;
+    font-size: 1.1em;
+    margin-top: 5px;
+}
+
+.form-range {
+    margin-bottom: 10px;
+}
+
+.card {
+    transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+}
+</style>
+{% endblock %}

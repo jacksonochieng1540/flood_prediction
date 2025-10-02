@@ -1,0 +1,260 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Prediction {{ prediction.id }} - Flood Prediction System{% endblock %}
+{% block page_title %}Prediction Details #{{ prediction.id }}{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-toolbar">
+    <div class="btn-group me-2">
+        <a href="{% url 'prediction_history' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i>Back to History
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Prediction Overview -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Prediction Overview</h6>
+                <span class="badge 
+                    {% if prediction.risk_level == 'critical' %}bg-danger
+                    {% elif prediction.risk_level == 'high' %}bg-warning
+                    {% elif prediction.risk_level == 'moderate' %}bg-info
+                    {% elif prediction.risk_level == 'low' %}bg-primary
+                    {% else %}bg-secondary{% endif %} fs-6">
+                    {{ prediction.get_risk_level_display }} Risk
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h4 class="{% if prediction.prediction %}text-danger{% else %}text-success{% endif %}">
+                            {% if prediction.prediction %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>FLOOD PREDICTED
+                            {% else %}
+                            <i class="fas fa-check-circle me-2"></i>NO FLOOD PREDICTED
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted">Created: {{ prediction.created_at|date:"F j, Y, g:i a" }}</p>
+                        {% if prediction.location %}
+                        <p><strong>Location:</strong> {{ prediction.location }}</p>
+                        {% endif %}
+                        {% if prediction.notes %}
+                        <p><strong>Notes:</strong> {{ prediction.notes }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border rounded p-3">
+                                    <h3 class="text-primary">{{ prediction.flood_probability_percent }}%</h3>
+                                    <small class="text-muted">Flood Probability</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="border rounded p-3">
+                                    <h3 class="text-info">{{ prediction.confidence_percent }}%</h3>
+                                    <small class="text-muted">Confidence</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Probability Visualization -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <h6>Probability Distribution</h6>
+                        <div class="progress" style="height: 30px;">
+                            <div class="progress-bar bg-success" 
+                                 style="width: {{ prediction.probability_no_flood|floatformat:3 }}%"
+                                 title="No Flood: {{ prediction.probability_no_flood|floatformat:3 }}%">
+                                No Flood: {{ prediction.probability_no_flood|floatformat:3 }}%
+                            </div>
+                            <div class="progress-bar bg-danger" 
+                                 style="width: {{ prediction.probability_flood|floatformat:3 }}%"
+                                 title="Flood: {{ prediction.probability_flood|floatformat:3 }}%">
+                                Flood: {{ prediction.probability_flood|floatformat:3 }}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Values -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Input Features</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Rainfall</strong></td>
+                                <td>{{ prediction.rainfall_mm }} mm</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Water Level</strong></td>
+                                <td>{{ prediction.water_level_m }} m</td>
+                            </tr>
+                            <tr>
+                                <td><strong>River Discharge</strong></td>
+                                <td>{{ prediction.river_discharge_m3s }} m³/s</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Soil Moisture</strong></td>
+                                <td>{{ prediction.soil_moisture_percent }}%</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Temperature</strong></td>
+                                <td>{{ prediction.temperature_celsius }}°C</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Humidity</strong></td>
+                                <td>{{ prediction.humidity_percent }}%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Elevation</strong></td>
+                                <td>{{ prediction.elevation_m }} m</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Slope</strong></td>
+                                <td>{{ prediction.slope_degree }}°</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Model Information -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Model Information</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Model Used:</strong> {{ prediction.model_used|title }}</p>
+                <p><strong>Prediction ID:</strong> {{ prediction.id }}</p>
+                <p><strong>Last Updated:</strong> {{ prediction.updated_at|date:"M j, Y, g:i a" }}</p>
+                
+                {% if prediction.actual_flood_occurred is not None %}
+                <div class="mt-3 p-3 rounded {% if prediction.actual_flood_occurred %}bg-danger text-white{% else %}bg-success text-white{% endif %}">
+                    <h6>Actual Outcome</h6>
+                    <p class="mb-0">
+                        {% if prediction.actual_flood_occurred %}
+                        <i class="fas fa-exclamation-triangle me-1"></i>Flood Occurred
+                        {% else %}
+                        <i class="fas fa-check-circle me-1"></i>No Flood Occurred
+                        {% endif %}
+                    </p>
+                    {% if prediction.verified_by %}
+                    <small>Verified by: {{ prediction.verified_by.username }}</small>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="mt-3 p-3 bg-light rounded">
+                    <h6>Outcome Not Verified</h6>
+                    <p class="mb-0 text-muted">Actual flood occurrence not yet recorded</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Related Alerts -->
+        {% if alerts %}
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Related Alerts</h6>
+            </div>
+            <div class="card-body">
+                {% for alert in alerts %}
+                <div class="alert alert-{{ alert.severity }} mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="alert-heading mb-1">{{ alert.get_alert_type_display }}</h6>
+                        <span class="badge bg-{{ alert.severity }}">{{ alert.get_severity_display }}</span>
+                    </div>
+                    <p class="mb-1 small">{{ alert.message }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">{{ alert.affected_area }}</small>
+                        <small class="text-muted">{{ alert.created_at|timesince }} ago</small>
+                    </div>
+                    {% if alert.recommended_actions %}
+                    <hr>
+                    <p class="mb-0"><strong>Actions:</strong> {{ alert.recommended_actions }}</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Feature Importance -->
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Top Features</h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for feature, importance in feature_importance.items|slice:":5" %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        {{ feature|title }}
+                        <span class="badge bg-primary rounded-pill">{{ importance|floatformat:3 }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                <a href="{% url 'feature_importance' %}" class="btn btn-sm btn-outline-primary mt-3 w-100">
+                    View Full Analysis
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-body text-center">
+                <div class="btn-group">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i>Print Report
+                    </button>
+                    <a href="{% url 'prediction_history' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-list me-1"></i>Back to List
+                    </a>
+                    {% if user.is_authenticated %}
+                    <button class="btn btn-outline-info" id="verifyOutcome">
+                        <i class="fas fa-check-circle me-1"></i>Verify Outcome
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Verify outcome functionality
+    document.getElementById('verifyOutcome').addEventListener('click', function() {
+        // This would typically open a modal or form to record actual outcome
+        alert('Outcome verification functionality would be implemented here');
+    });
+});
+</script>
+{% endblock %}

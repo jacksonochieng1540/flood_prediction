@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flood Prediction System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-predict {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-predict:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            animation: slideIn 0.5s;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.flood {
+            background: #fee;
+            border: 2px solid #f44336;
+        }
+
+        .result.no-flood {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+        }
+
+        .result h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .result.flood h3 {
+            color: #c62828;
+        }
+
+        .result.no-flood h3 {
+            color: #2e7d32;
+        }
+
+        .result-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .result-item {
+            padding: 10px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 5px;
+        }
+
+        .result-item strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .risk-low {
+            background: #4caf50;
+            color: white;
+        }
+
+        .risk-moderate {
+            background: #ff9800;
+            color: white;
+        }
+
+        .risk-high {
+            background: #ff5722;
+            color: white;
+        }
+
+        .risk-critical {
+            background: #f44336;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .result-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 Flood Prediction System</h1>
+            <p>AI-Powered Flood Risk Assessment & Monitoring</p>
+        </div>
+
+        <div class="dashboard">
+            <div class="card">
+                <h2>Input Parameters</h2>
+                <form id="predictionForm">
+                    <div class="form-group">
+                        <label for="rainfall">Rainfall (mm)</label>
+                        <input type="number" id="rainfall" name="rainfall" step="0.1" value="50" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="water_level">Water Level (m)</label>
+                        <input type="number" id="water_level" name="water_level" step="0.1" value="3" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="river_discharge">River Discharge (m³/s)</label>
+                        <input type="number" id="river_discharge" name="river_discharge" step="0.1" value="100" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="soil_moisture">Soil Moisture (%)</label>
+                        <input type="number" id="soil_moisture" name="soil_moisture" step="0.1" min="0" max="100" value="60" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="temperature">Temperature (°C)</label>
+                        <input type="number" id="temperature" name="temperature" step="0.1" value="25" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="humidity">Humidity (%)</label>
+                        <input type="number" id="humidity" name="humidity" step="0.1" min="0" max="100" value="70" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="elevation">Elevation (m)</label>
+                        <input type="number" id="elevation" name="elevation" step="0.1" value="100" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="slope">Slope (degrees)</label>
+                        <input type="number" id="slope" name="slope" step="0.1" min="0" max="90" value="5" required>
+                    </div>
+
+                    <button type="submit" class="btn-predict">Predict Flood Risk</button>
+                </form>
+
+                <div id="result" class="result">
+                    <h3 id="resultTitle"></h3>
+                    <div class="result-details">
+                        <div class="result-item">
+                            <strong>Flood Probability</strong>
+                            <span id="floodProb"></span>
+                        </div>
+                        <div class="result-item">
+                            <strong>Risk Level</strong>
+                            <span id="riskLevel"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Prediction Visualization</h2>
+                <div class="chart-container">
+                    <canvas id="probabilityChart"></canvas>
+                </div>
+            </div>
+
+            <div class="card full-width">
+                <h2>Feature Importance</h2>
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="importanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let probabilityChart = null;
+        let importanceChart = null;
+
+        // Initialize charts
+        function initCharts() {
+            // Probability Chart
+            const probCtx = document.getElementById('probabilityChart').getContext('2d');
+            probabilityChart = new Chart(probCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Flood', 'Flood'],
+                    datasets: [{
+                        data: [50, 50],
+                        backgroundColor: ['#4caf50', '#f44336'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: 'Flood vs No Flood Probability'
+                        }
+                    }
+                }
+            });
+
+            // Load feature importance
+            loadFeatureImportance();
+        }
+
+        function loadFeatureImportance() {
+            fetch('/importance/')
+                .then(response => response.json())
+                .then(data => {
+                    const importance = data.importance;
+                    const labels = Object.keys(importance).map(k => 
+                        k.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                    );
+                    const values = Object.values(importance);
+
+                    const impCtx = document.getElementById('importanceChart').getContext('2d');
+                    importanceChart = new Chart(impCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Importance Score',
+                                data: values,
+                                backgroundColor: 'rgba(102, 126, 234, 0.7)',
+                                borderColor: 'rgba(102, 126, 234, 1)',
+                                borderWidth: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            indexAxis: 'y',
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Model Feature Importance'
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    title: {
+                                        display: true,
+                                        text: 'Importance Score'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                });
+        }
+
+        // Handle form submission
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = {
+                rainfall: document.getElementById('rainfall').value,
+                water_level: document.getElementById('water_level').value,
+                river_discharge: document.getElementById('river_discharge').value,
+                soil_moisture: document.getElementById('soil_moisture').value,
+                temperature: document.getElementById('temperature').value,
+                humidity: document.getElementById('humidity').value,
+                elevation: document.getElementById('elevation').value,
+                slope: document.getElementById('slope').value
+            };
+
+            fetch('/predict/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayResult(data.prediction);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to get prediction');
+            });
+        });
+
+        function displayResult(prediction) {
+            const resultDiv = document.getElementById('result');
+            const resultTitle = document.getElementById('resultTitle');
+            const floodProb = document.getElementById('floodProb');
+            const riskLevel = document.getElementById('riskLevel');
+
+            // Update result display
+            if (prediction.prediction === 1) {
+                resultDiv.className = 'result flood';
+                resultTitle.textContent = '⚠️ FLOOD RISK DETECTED';
+            } else {
+                resultDiv.className = 'result no-flood';
+                resultTitle.textContent = '✓ NO FLOOD RISK';
+            }
+
+            floodProb.textContent = (prediction.probability_flood * 100).toFixed(1) + '%';
+            
+            const riskClass = 'risk-' + prediction.risk_level.toLowerCase();
+            riskLevel.innerHTML = `<span class="risk-badge ${riskClass}">${prediction.risk_level}</span>`;
+
+            resultDiv.style.display = 'block';
+
+            // Update probability chart
+            probabilityChart.data.datasets[0].data = [
+                prediction.probability_no_flood * 100,
+                prediction.probability_flood * 100
+            ];
+            probabilityChart.update();
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', initCharts);
+    </script>
+</body>
+</html>

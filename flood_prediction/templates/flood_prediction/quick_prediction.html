@@ -1,0 +1,391 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Quick Prediction - Flood Prediction System{% endblock %}
+{% block page_title %}Quick Prediction{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-toolbar">
+    <div class="btn-group me-2">
+        <a href="{% url 'index' %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+        </a>
+        <a href="{% url 'prediction_history' %}" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-history me-1"></i>Full Prediction
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-bolt me-2"></i>Quick Scenario-Based Predictions
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Select a predefined scenario to quickly generate flood predictions based on common environmental conditions.
+                </p>
+
+                <!-- Scenario Selection -->
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card scenario-card" data-scenario="normal">
+                            <div class="card-body text-center">
+                                <i class="fas fa-cloud-sun fa-3x text-primary mb-3"></i>
+                                <h5 class="card-title">Normal Conditions</h5>
+                                <p class="card-text text-muted small">
+                                    Typical weather with moderate rainfall and normal river levels
+                                </p>
+                                <div class="scenario-features">
+                                    <small>Rainfall: 15mm</small><br>
+                                    <small>Water Level: 2.5m</small><br>
+                                    <small>Soil Moisture: 45%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card scenario-card" data-scenario="heavy_rain">
+                            <div class="card-body text-center">
+                                <i class="fas fa-cloud-rain fa-3x text-warning mb-3"></i>
+                                <h5 class="card-title">Heavy Rainfall</h5>
+                                <p class="card-text text-muted small">
+                                    Intense rainfall with rising water levels and saturated soil
+                                </p>
+                                <div class="scenario-features">
+                                    <small>Rainfall: 85mm</small><br>
+                                    <small>Water Level: 4.2m</small><br>
+                                    <small>Soil Moisture: 80%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card scenario-card" data-scenario="drought">
+                            <div class="card-body text-center">
+                                <i class="fas fa-sun fa-3x text-info mb-3"></i>
+                                <h5 class="card-title">Drought Conditions</h5>
+                                <p class="card-text text-muted small">
+                                    Dry spell with low water levels and minimal flood risk
+                                </p>
+                                <div class="scenario-features">
+                                    <small>Rainfall: 2mm</small><br>
+                                    <small>Water Level: 1.2m</small><br>
+                                    <small>Soil Moisture: 15%</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Scenario Form -->
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">
+                            <i class="fas fa-sliders-h me-2"></i>Custom Scenario
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <form id="customScenarioForm">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="custom_rainfall" class="form-label">Rainfall (mm)</label>
+                                    <input type="range" class="form-range" id="custom_rainfall" 
+                                           min="0" max="200" step="1" value="15">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0mm</small>
+                                        <small id="rainfall_value">15mm</small>
+                                        <small>200mm</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="custom_water_level" class="form-label">Water Level (m)</label>
+                                    <input type="range" class="form-range" id="custom_water_level" 
+                                           min="0" max="10" step="0.1" value="2.5">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0m</small>
+                                        <small id="water_level_value">2.5m</small>
+                                        <small>10m</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="custom_soil_moisture" class="form-label">Soil Moisture (%)</label>
+                                    <input type="range" class="form-range" id="custom_soil_moisture" 
+                                           min="0" max="100" step="1" value="45">
+                                    <div class="d-flex justify-content-between">
+                                        <small>0%</small>
+                                        <small id="soil_moisture_value">45%</small>
+                                        <small>100%</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="custom_location" class="form-label">Location (Optional)</label>
+                                    <input type="text" class="form-control" id="custom_location" 
+                                           placeholder="Enter location name">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-bolt me-1"></i>Generate Custom Prediction
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div id="predictionResult" class="mt-4" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Scenario Descriptions -->
+        <div class="card shadow mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Scenario Descriptions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6>Normal Conditions</h6>
+                        <p class="small text-muted">
+                            Represents typical weather patterns with moderate rainfall that allows for proper drainage
+                            and minimal flood risk. Suitable for baseline monitoring.
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Heavy Rainfall</h6>
+                        <p class="small text-muted">
+                            Simulates extreme weather events with intense precipitation that can lead to rapid
+                            water level rise and potential flooding in vulnerable areas.
+                        </p>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Drought Conditions</h6>
+                        <p class="small text-muted">
+                            Represents extended dry periods with minimal rainfall, low river levels,
+                            and significantly reduced flood risk. Useful for drought impact assessment.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Scenario card selection
+    document.querySelectorAll('.scenario-card').forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove active class from all cards
+            document.querySelectorAll('.scenario-card').forEach(c => {
+                c.classList.remove('border-primary', 'bg-light');
+            });
+            
+            // Add active class to clicked card
+            this.classList.add('border-primary', 'bg-light');
+            
+            const scenario = this.getAttribute('data-scenario');
+            generateQuickPrediction(scenario);
+        });
+    });
+
+    // Range input value display
+    document.getElementById('custom_rainfall').addEventListener('input', function() {
+        document.getElementById('rainfall_value').textContent = this.value + 'mm';
+    });
+
+    document.getElementById('custom_water_level').addEventListener('input', function() {
+        document.getElementById('water_level_value').textContent = this.value + 'm';
+    });
+
+    document.getElementById('custom_soil_moisture').addEventListener('input', function() {
+        document.getElementById('soil_moisture_value').textContent = this.value + '%';
+    });
+
+    // Custom form submission
+    document.getElementById('customScenarioForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const features = {
+            rainfall: document.getElementById('custom_rainfall').value,
+            water_level: document.getElementById('custom_water_level').value,
+            soil_moisture: document.getElementById('custom_soil_moisture').value,
+            river_discharge: calculateRiverDischarge(
+                document.getElementById('custom_rainfall').value,
+                document.getElementById('custom_water_level').value
+            ),
+            temperature: 22, // Default values
+            humidity: 65,
+            elevation: 150,
+            slope: 5,
+            location: document.getElementById('custom_location').value || 'Custom Scenario',
+            notes: 'Quick prediction from custom scenario'
+        };
+        
+        generateCustomPrediction(features);
+    });
+
+    function generateQuickPrediction(scenario) {
+        const scenarios = {
+            'normal': {
+                rainfall: 15, water_level: 2.5, river_discharge: 120,
+                soil_moisture: 45, temperature: 22, humidity: 65,
+                elevation: 150, slope: 5, location: 'Normal Conditions'
+            },
+            'heavy_rain': {
+                rainfall: 85, water_level: 4.2, river_discharge: 350,
+                soil_moisture: 80, temperature: 18, humidity: 90,
+                elevation: 120, slope: 8, location: 'Heavy Rainfall Scenario'
+            },
+            'drought': {
+                rainfall: 2, water_level: 1.2, river_discharge: 45,
+                soil_moisture: 15, temperature: 30, humidity: 35,
+                elevation: 200, slope: 3, location: 'Drought Conditions'
+            }
+        };
+
+        generateCustomPrediction(scenarios[scenario]);
+    }
+
+    function calculateRiverDischarge(rainfall, waterLevel) {
+        // Simple calculation for demonstration
+        const baseDischarge = 50;
+        const rainFactor = rainfall * 2;
+        const levelFactor = waterLevel * 20;
+        return Math.round(baseDischarge + rainFactor + levelFactor);
+    }
+
+    function generateCustomPrediction(features) {
+        // Show loading state
+        const resultDiv = document.getElementById('predictionResult');
+        resultDiv.innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Generating prediction...</p>
+            </div>
+        `;
+        resultDiv.style.display = 'block';
+
+        // Make prediction request
+        fetch('{% url "predict_flood" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(features)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayPredictionResult(data.prediction, features.location);
+            } else {
+                throw new Error(data.error);
+            }
+        })
+        .catch(error => {
+            resultDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Prediction Failed</h5>
+                    <p class="mb-0">${error.message}</p>
+                </div>
+            `;
+        });
+    }
+
+    function displayPredictionResult(result, location) {
+        const riskClass = 'risk-' + result.risk_level.toLowerCase().replace(' ', '_');
+        
+        const resultHtml = `
+            <div class="card ${riskClass}">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Prediction Result - ${location}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="text-${result.prediction ? 'danger' : 'success'}">
+                                ${result.prediction ? 'FLOOD PREDICTED' : 'NO FLOOD PREDICTED'}
+                            </h3>
+                            <p><strong>Risk Level:</strong> 
+                                <span class="badge bg-${getRiskBadgeColor(result.risk_level)}">
+                                    ${result.risk_level}
+                                </span>
+                            </p>
+                            <p><strong>Flood Probability:</strong> ${(result.probability_flood * 100).toFixed(1)}%</p>
+                            <p><strong>Confidence:</strong> ${(result.confidence * 100).toFixed(1)}%</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Key Factors:</h6>
+                            <ul class="list-unstyled">
+                                <li><small>Rainfall: ${result.feature_importance?.rainfall_mm ? (result.feature_importance.rainfall_mm * 100).toFixed(1) + '%' : 'N/A'}</small></li>
+                                <li><small>Water Level: ${result.feature_importance?.water_level_m ? (result.feature_importance.water_level_m * 100).toFixed(1) + '%' : 'N/A'}</small></li>
+                                <li><small>Soil Moisture: ${result.feature_importance?.soil_moisture_percent ? (result.feature_importance.soil_moisture_percent * 100).toFixed(1) + '%' : 'N/A'}</small></li>
+                            </ul>
+                        </div>
+                    </div>
+                    ${result.prediction ? 
+                        '<div class="alert alert-danger mt-3"><strong>Warning:</strong> Take necessary precautions! Monitor water levels closely.</div>' : 
+                        '<div class="alert alert-success mt-3"><strong>All Clear:</strong> No immediate flood risk detected.</div>'
+                    }
+                    <div class="mt-3">
+                        <a href="/prediction/${result.prediction_id}/" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye me-1"></i>View Detailed Analysis
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('predictionResult').innerHTML = resultHtml;
+    }
+
+    function getRiskBadgeColor(riskLevel) {
+        const colors = {
+            'Very Low': 'secondary',
+            'Low': 'primary',
+            'Moderate': 'info',
+            'High': 'warning',
+            'Critical': 'danger'
+        };
+        return colors[riskLevel] || 'secondary';
+    }
+});
+</script>
+
+<style>
+.scenario-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.scenario-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.scenario-features {
+    background-color: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+</style>
+{% endblock %}

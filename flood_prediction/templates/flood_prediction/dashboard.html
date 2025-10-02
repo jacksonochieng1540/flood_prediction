@@ -1,0 +1,579 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Dashboard - Flood Prediction System{% endblock %}
+{% block page_title %}Flood Prediction Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Predictions
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_predictions }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            High Risk Predictions
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ high_risk_count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-danger shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                            Active Alerts
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ active_alerts.count }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-bell fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2 stat-card">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            System Status
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Operational</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Predictions -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Recent Predictions</h6>
+                <a href="{% url 'flood_prediction:prediction_history' %}" class="btn btn-sm btn-primary">View All</a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover" id="recentPredictionsTable">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Time</th>
+                                <th>Location</th>
+                                <th>Risk Level</th>
+                                <th>Flood Probability</th>
+                                <th>Confidence</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prediction in recent_predictions %}
+                            <tr class="risk-{{ prediction.risk_level }} clickable-row" data-prediction-id="{{ prediction.id }}">
+                                <td>{{ prediction.created_at|date:"M d, H:i" }}</td>
+                                <td>{{ prediction.location|default:"N/A" }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if prediction.risk_level == 'critical' %}bg-danger
+                                        {% elif prediction.risk_level == 'high' %}bg-warning
+                                        {% elif prediction.risk_level == 'moderate' %}bg-info
+                                        {% elif prediction.risk_level == 'low' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ prediction.get_risk_level_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                            <div class="progress-bar 
+                                                {% if prediction.probability_flood > 0.7 %}bg-danger
+                                                {% elif prediction.probability_flood > 0.4 %}bg-warning
+                                                {% else %}bg-success{% endif %}" 
+                                                style="width: {{ prediction.flood_probability_percent }}%">
+                                            </div>
+                                        </div>
+                                        <span class="small">{{ prediction.flood_probability_percent }}%</span>
+                                    </div>
+                                </td>
+                                <td>{{ prediction.confidence_percent }}%</td>
+                                <td>
+                                    <a href="{% url 'flood_prediction:prediction_detail' prediction.id %}" 
+                                       class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-0">No predictions yet</p>
+                                    <a href="#prediction-form" class="btn btn-sm btn-primary mt-2">
+                                        <i class="fas fa-bolt me-1"></i>Make First Prediction
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Alerts -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-danger">Active Alerts</h6>
+                <a href="{% url 'flood_prediction:alerts_dashboard' %}" class="btn btn-sm btn-outline-danger">Manage</a>
+            </div>
+            <div class="card-body">
+                {% for alert in active_alerts %}
+                <div class="alert alert-{{ alert.severity }} mb-3 p-3 clickable-alert" data-alert-id="{{ alert.id }}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="alert-heading mb-1">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            {{ alert.get_alert_type_display }}
+                        </h6>
+                        <span class="badge bg-{{ alert.severity }}">{{ alert.get_severity_display }}</span>
+                    </div>
+                    <p class="mb-1 small">{{ alert.message }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <small class="text-muted">{{ alert.affected_area }}</small>
+                        <small class="text-muted">{{ alert.created_at|timesince }} ago</small>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <div class="mt-2">
+                        <button class="btn btn-sm btn-outline-success resolve-alert-btn" 
+                                data-alert-id="{{ alert.id }}">
+                            <i class="fas fa-check me-1"></i>Resolve
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <p>No active alerts</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card shadow mt-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-info">Quick Actions</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'flood_prediction:quick_prediction' %}" class="btn btn-outline-info">
+                        <i class="fas fa-bolt me-1"></i>Quick Prediction
+                    </a>
+                    <a href="{% url 'flood_prediction:analytics_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-chart-bar me-1"></i>View Analytics
+                    </a>
+                    <a href="{% url 'flood_prediction:feature_importance' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-chart-pie me-1"></i>Feature Analysis
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Prediction Form -->
+<div class="row" id="prediction-form">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Make New Prediction</h6>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="clearFormBtn">
+                    <i class="fas fa-broom me-1"></i>Clear Form
+                </button>
+            </div>
+            <div class="card-body">
+                <form id="predictionForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="rainfall" class="form-label">Rainfall (mm)</label>
+                            <input type="number" step="0.1" class="form-control" id="rainfall" name="rainfall" 
+                                   min="0" max="500" value="15.0" required>
+                            <div class="form-text">Typical range: 0-200mm</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="water_level" class="form-label">Water Level (m)</label>
+                            <input type="number" step="0.1" class="form-control" id="water_level" name="water_level" 
+                                   min="0" max="20" value="2.5" required>
+                            <div class="form-text">Typical range: 0-10m</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="river_discharge" class="form-label">River Discharge (m³/s)</label>
+                            <input type="number" step="0.1" class="form-control" id="river_discharge" name="river_discharge" 
+                                   min="0" max="1000" value="120.0" required>
+                            <div class="form-text">Typical range: 0-500m³/s</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="soil_moisture" class="form-label">Soil Moisture (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="soil_moisture" name="soil_moisture" 
+                                   min="0" max="100" value="45.0" required>
+                            <div class="form-text">Range: 0-100%</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="temperature" class="form-label">Temperature (°C)</label>
+                            <input type="number" step="0.1" class="form-control" id="temperature" name="temperature" 
+                                   min="-50" max="60" value="22.0" required>
+                            <div class="form-text">Typical range: -20 to 50°C</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="humidity" class="form-label">Humidity (%)</label>
+                            <input type="number" step="0.1" class="form-control" id="humidity" name="humidity" 
+                                   min="0" max="100" value="65.0" required>
+                            <div class="form-text">Range: 0-100%</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="elevation" class="form-label">Elevation (m)</label>
+                            <input type="number" step="0.1" class="form-control" id="elevation" name="elevation" 
+                                   min="0" max="5000" value="150.0" required>
+                            <div class="form-text">Typical range: 0-2000m</div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="slope" class="form-label">Slope (degrees)</label>
+                            <input type="number" step="0.1" class="form-control" id="slope" name="slope" 
+                                   min="0" max="90" value="5.0" required>
+                            <div class="form-text">Range: 0-90°</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   placeholder="Enter location name">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <input type="text" class="form-control" id="notes" name="notes" 
+                                   placeholder="Any additional notes">
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary" id="predictBtn">
+                            <i class="fas fa-bolt me-1"></i>Predict Flood Risk
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary" id="fillSampleBtn">
+                            <i class="fas fa-flask me-1"></i>Fill Sample Data
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="predictionResult" class="mt-4" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Prediction form submission
+    document.getElementById('predictionForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const predictBtn = document.getElementById('predictBtn');
+        const originalText = predictBtn.innerHTML;
+        
+        // Show loading state
+        predictBtn.disabled = true;
+        predictBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Predicting...';
+        
+        const formData = {
+            rainfall: document.getElementById('rainfall').value,
+            water_level: document.getElementById('water_level').value,
+            river_discharge: document.getElementById('river_discharge').value,
+            soil_moisture: document.getElementById('soil_moisture').value,
+            temperature: document.getElementById('temperature').value,
+            humidity: document.getElementById('humidity').value,
+            elevation: document.getElementById('elevation').value,
+            slope: document.getElementById('slope').value,
+            location: document.getElementById('location').value,
+            notes: document.getElementById('notes').value
+        };
+        
+        fetch('{% url "flood_prediction:predict_flood" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                displayPredictionResult(data);
+            } else {
+                throw new Error(data.error || 'Prediction failed');
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+            console.error('Prediction error:', error);
+        })
+        .finally(() => {
+            // Reset button state
+            predictBtn.disabled = false;
+            predictBtn.innerHTML = originalText;
+        });
+    });
+    
+    // Clear form button
+    document.getElementById('clearFormBtn').addEventListener('click', function() {
+        document.getElementById('predictionForm').reset();
+        document.getElementById('predictionResult').style.display = 'none';
+    });
+    
+    // Fill sample data button
+    document.getElementById('fillSampleBtn').addEventListener('click', function() {
+        document.getElementById('rainfall').value = '75.0';
+        document.getElementById('water_level').value = '4.2';
+        document.getElementById('river_discharge').value = '280.0';
+        document.getElementById('soil_moisture').value = '85.0';
+        document.getElementById('temperature').value = '18.0';
+        document.getElementById('humidity').value = '92.0';
+        document.getElementById('elevation').value = '120.0';
+        document.getElementById('slope').value = '7.0';
+        document.getElementById('location').value = 'Sample Location';
+        document.getElementById('notes').value = 'Sample prediction data';
+    });
+    
+    // Make table rows clickable
+    document.querySelectorAll('.clickable-row').forEach(row => {
+        row.addEventListener('click', function() {
+            const predictionId = this.getAttribute('data-prediction-id');
+            window.location.href = `/prediction/${predictionId}/`;
+        });
+    });
+    
+    // Make alert cards clickable
+    document.querySelectorAll('.clickable-alert').forEach(alert => {
+        alert.addEventListener('click', function(e) {
+            // Don't trigger if resolve button was clicked
+            if (!e.target.closest('.resolve-alert-btn')) {
+                const alertId = this.getAttribute('data-alert-id');
+                window.location.href = '/alerts/';
+            }
+        });
+    });
+    
+    // Resolve alert buttons
+    document.querySelectorAll('.resolve-alert-btn').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.stopPropagation(); // Prevent triggering the card click
+            const alertId = this.getAttribute('data-alert-id');
+            
+            if (confirm('Are you sure you want to resolve this alert?')) {
+                fetch(`/api/alerts/${alertId}/update/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ status: 'resolved' })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error resolving alert');
+                    console.error('Alert resolution error:', error);
+                });
+            }
+        });
+    });
+    
+    function displayPredictionResult(response) {
+        const result = response.prediction;
+        const riskClass = 'risk-' + result.risk_level.toLowerCase().replace(' ', '_');
+        
+        let resultHtml = `
+            <div class="card ${riskClass}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-bolt me-2"></i>Prediction Result
+                    </h5>
+                    <span class="badge bg-${getRiskBadgeColor(result.risk_level)} fs-6">
+                        ${result.risk_level}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h3 class="text-${result.prediction ? 'danger' : 'success'}">
+                                ${result.prediction ? '🚨 FLOOD PREDICTED' : '✅ NO FLOOD PREDICTED'}
+                            </h3>
+                            <div class="mb-3">
+                                <strong>Flood Probability:</strong>
+                                <div class="progress mt-1" style="height: 20px;">
+                                    <div class="progress-bar 
+                                        ${result.probability_flood > 0.7 ? 'bg-danger' : 
+                                          result.probability_flood > 0.4 ? 'bg-warning' : 'bg-success'}" 
+                                        style="width: ${(result.probability_flood * 100).toFixed(1)}%">
+                                        ${(result.probability_flood * 100).toFixed(1)}%
+                                    </div>
+                                </div>
+                            </div>
+                            <p><strong>Confidence:</strong> ${(result.confidence * 100).toFixed(1)}%</p>
+                            ${response.prediction_id ? 
+                                `<a href="/prediction/${response.prediction_id}/" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye me-1"></i>View Detailed Analysis
+                                </a>` : ''
+                            }
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Top Influencing Factors:</h6>
+                            <div class="list-group list-group-flush">
+        `;
+        
+        if (result.feature_importance) {
+            const topFeatures = Object.entries(result.feature_importance)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 3);
+            
+            topFeatures.forEach(([feature, importance]) => {
+                const featureName = feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                resultHtml += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span>${featureName}</span>
+                        <span class="badge bg-primary rounded-pill">${(importance * 100).toFixed(1)}%</span>
+                    </div>
+                `;
+            });
+        }
+        
+        resultHtml += `
+                            </div>
+                        </div>
+                    </div>
+                    ${result.prediction ? 
+                        '<div class="alert alert-danger mt-3">' +
+                            '<strong>🚨 Warning:</strong> High flood risk detected! Monitor water levels closely and take necessary precautions.' +
+                        '</div>' : 
+                        '<div class="alert alert-success mt-3">' +
+                            '<strong>✅ All Clear:</strong> No immediate flood risk detected. Continue monitoring conditions.' +
+                        '</div>'
+                    }
+                </div>
+            </div>
+        `;
+        
+        const resultDiv = document.getElementById('predictionResult');
+        resultDiv.innerHTML = resultHtml;
+        resultDiv.style.display = 'block';
+        
+        // Scroll to results
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    function getRiskBadgeColor(riskLevel) {
+        const colors = {
+            'Very Low': 'secondary',
+            'Low': 'primary',
+            'Moderate': 'info',
+            'High': 'warning',
+            'Critical': 'danger'
+        };
+        return colors[riskLevel] || 'secondary';
+    }
+});
+</script>
+
+<style>
+.clickable-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.clickable-row:hover {
+    background-color: #f8f9fa !important;
+}
+
+.clickable-alert {
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.clickable-alert:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.stat-card {
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+</style>
+{% endblock %}

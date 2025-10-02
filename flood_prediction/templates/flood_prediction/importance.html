@@ -1,0 +1,125 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Feature Importance - Flood Prediction System{% endblock %}
+{% block page_title %}Feature Importance Analysis{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Feature Importance Ranking</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <canvas id="importanceChart" width="400" height="300"></canvas>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Rank</th>
+                                        <th>Feature</th>
+                                        <th>Importance</th>
+                                        <th>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for feature, importance in top_features %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{ feature }}</td>
+                                        <td>{{ importance|floatformat:4 }}</td>
+                                        <td>{{ importance|floatformat:1 }}%</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Feature Descriptions</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Key Features:</h6>
+                        <ul>
+                            <li><strong>Rainfall (mm):</strong> Amount of precipitation in millimeters</li>
+                            <li><strong>Water Level (m):</strong> Current river/water body level in meters</li>
+                            <li><strong>River Discharge (m³/s):</strong> Volume of water flowing through river</li>
+                            <li><strong>Soil Moisture (%):</strong> Water content in soil as percentage</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Environmental Features:</h6>
+                        <ul>
+                            <li><strong>Temperature (°C):</strong> Ambient air temperature</li>
+                            <li><strong>Humidity (%):</strong> Relative humidity in air</li>
+                            <li><strong>Elevation (m):</strong> Height above sea level</li>
+                            <li><strong>Slope (degrees):</strong> Terrain incline angle</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('importanceChart').getContext('2d');
+    const featureData = {
+        labels: [{% for feature, importance in top_features %}'{{ feature }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Feature Importance',
+            data: [{% for feature, importance in top_features %}{{ importance }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+                '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43'
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: featureData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Top Flood Prediction Features'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Importance Score'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

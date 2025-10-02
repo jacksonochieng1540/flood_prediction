@@ -1,0 +1,373 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Analytics - Flood Prediction System{% endblock %}
+{% block page_title %}Analytics Dashboard{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-toolbar">
+    <div class="btn-group me-2">
+        <a href="{% url 'prediction_history' %}" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-history me-1"></i>Prediction History
+        </a>
+        <a href="{% url 'feature_importance' %}" class="btn btn-sm btn-outline-info">
+            <i class="fas fa-chart-pie me-1"></i>Feature Analysis
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Row -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Total Predictions
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_predictions }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-database fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                            This Week
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ weekly_predictions }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-week fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            This Month
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">{{ monthly_predictions }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            High Risk Rate
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">
+                            {% widthratio high_risk_count total_predictions 100 %}%
+                        </div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-exclamation-triangle fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Risk Distribution Chart -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Risk Level Distribution</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="riskDistributionChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Probability Statistics -->
+    <div class="col-lg-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Average Probabilities by Risk Level</h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Risk Level</th>
+                                <th>Avg Flood Probability</th>
+                                <th>Avg Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in probability_stats %}
+                            <tr>
+                                <td>
+                                    <span class="badge 
+                                        {% if stat.risk_level == 'critical' %}bg-danger
+                                        {% elif stat.risk_level == 'high' %}bg-warning
+                                        {% elif stat.risk_level == 'moderate' %}bg-info
+                                        {% elif stat.risk_level == 'low' %}bg-primary
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ stat.risk_level|title }}
+                                    </span>
+                                </td>
+                                <td>{{ stat.avg_flood_prob|floatformat:3 }}</td>
+                                <td>{{ stat.avg_confidence|floatformat:3 }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Model Performance -->
+    <div class="col-lg-8">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold text-primary">Model Performance History</h6>
+                <button class="btn btn-sm btn-outline-primary" id="retrainModel">
+                    <i class="fas fa-sync-alt me-1"></i>Retrain Model
+                </button>
+            </div>
+            <div class="card-body">
+                {% if model_performance %}
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Model Version</th>
+                                <th>Accuracy</th>
+                                <th>Precision</th>
+                                <th>Recall</th>
+                                <th>F1 Score</th>
+                                <th>Training Samples</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for performance in model_performance %}
+                            <tr>
+                                <td>{{ performance.created_at|date:"M d, Y" }}</td>
+                                <td>{{ performance.model_version }}</td>
+                                <td>{{ performance.accuracy|floatformat:3 }}</td>
+                                <td>{{ performance.precision|floatformat:3 }}</td>
+                                <td>{{ performance.recall|floatformat:3 }}</td>
+                                <td>{{ performance.f1_score|floatformat:3 }}</td>
+                                <td>{{ performance.training_samples }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-chart-line fa-3x mb-3"></i>
+                    <p>No model performance data available</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent High Risk Predictions -->
+    <div class="col-lg-4">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-danger">Recent High Risk Predictions</h6>
+            </div>
+            <div class="card-body">
+                {% for prediction in recent_high_risk %}
+                <div class="alert alert-{{ prediction.risk_level }} mb-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h6 class="alert-heading mb-1">
+                            {% if prediction.location %}
+                            {{ prediction.location }}
+                            {% else %}
+                            Prediction #{{ prediction.id }}
+                            {% endif %}
+                        </h6>
+                        <span class="badge bg-{{ prediction.risk_level }}">
+                            {{ prediction.get_risk_level_display }}
+                        </span>
+                    </div>
+                    <p class="mb-1">Probability: {{ prediction.flood_probability_percent }}%</p>
+                    <small class="text-muted">{{ prediction.created_at|timesince }} ago</small>
+                    <div class="mt-2">
+                        <a href="{% url 'prediction_detail' prediction.id %}" class="btn btn-sm btn-outline-primary">
+                            View Details
+                        </a>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <p>No high risk predictions</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Charts -->
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Performance Metrics Over Time</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="performanceChart" width="400" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Risk Distribution Chart
+    const riskCtx = document.getElementById('riskDistributionChart').getContext('2d');
+    const riskData = {
+        labels: [{% for item in risk_distribution %}'{{ item.risk_level|title }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for item in risk_distribution %}{{ item.count }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [
+                '#28a745', // Very Low - Green
+                '#007bff', // Low - Blue
+                '#ffc107', // Moderate - Yellow
+                '#fd7e14', // High - Orange
+                '#dc3545'  // Critical - Red
+            ],
+            borderWidth: 1
+        }]
+    };
+
+    new Chart(riskCtx, {
+        type: 'doughnut',
+        data: riskData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Performance Chart
+    const perfCtx = document.getElementById('performanceChart').getContext('2d');
+    const perfData = {
+        labels: [{% for perf in model_performance %}'{{ perf.created_at|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+        datasets: [
+            {
+                label: 'Accuracy',
+                data: [{% for perf in model_performance %}{{ perf.accuracy }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: true
+            },
+            {
+                label: 'Precision',
+                data: [{% for perf in model_performance %}{{ perf.precision }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                fill: true
+            },
+            {
+                label: 'Recall',
+                data: [{% for perf in model_performance %}{{ perf.recall }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: '#ffc107',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                fill: true
+            },
+            {
+                label: 'F1 Score',
+                data: [{% for perf in model_performance %}{{ perf.f1_score }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                borderColor: '#dc3545',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                fill: true
+            }
+        ]
+    };
+
+    new Chart(perfCtx, {
+        type: 'line',
+        data: perfData,
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 1.0
+                }
+            }
+        }
+    });
+
+    // Retrain model functionality
+    document.getElementById('retrainModel').addEventListener('click', function() {
+        if (confirm('Are you sure you want to retrain the model? This may take several minutes.')) {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Retraining...';
+            
+            fetch('{% url "retrain_model" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Model retrained successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error retraining model');
+            })
+            .finally(() => {
+                this.disabled = false;
+                this.innerHTML = '<i class="fas fa-sync-alt me-1"></i>Retrain Model';
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

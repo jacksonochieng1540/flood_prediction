@@ -1,0 +1,204 @@
+{% extends 'flood_prediction/base.html' %}
+
+{% block title %}Prediction History - Flood Prediction System{% endblock %}
+{% block page_title %}Prediction History{% endblock %}
+
+{% block header_buttons %}
+<div class="btn-group me-2">
+    <a href="{% url 'analytics_dashboard' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-chart-bar me-1"></i>Analytics
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="risk_level" class="form-label">Risk Level</label>
+                <select name="risk_level" id="risk_level" class="form-select">
+                    <option value="all">All Risk Levels</option>
+                    {% for value, label in risk_levels %}
+                    <option value="{{ value }}" {% if current_filters.risk_level == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="date" class="form-label">Date</label>
+                <input type="date" name="date" id="date" class="form-control" 
+                       value="{{ current_filters.date }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i>Apply Filters
+                    </button>
+                    <a href="{% url 'prediction_history' %}" class="btn btn-outline-secondary">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Predictions Table -->
+<div class="card shadow">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">
+            Prediction Records ({{ page_obj.paginator.count }} total)
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Timestamp</th>
+                        <th>Location</th>
+                        <th>Risk Level</th>
+                        <th>Flood Predicted</th>
+                        <th>Probability</th>
+                        <th>Confidence</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prediction in page_obj %}
+                    <tr class="risk-{{ prediction.risk_level }}">
+                        <td>{{ prediction.id }}</td>
+                        <td>{{ prediction.created_at|date:"M d, Y H:i" }}</td>
+                        <td>{{ prediction.location|default:"N/A" }}</td>
+                        <td>
+                            <span class="badge 
+                                {% if prediction.risk_level == 'critical' %}bg-danger
+                                {% elif prediction.risk_level == 'high' %}bg-warning
+                                {% elif prediction.risk_level == 'moderate' %}bg-info
+                                {% elif prediction.risk_level == 'low' %}bg-primary
+                                {% else %}bg-secondary{% endif %}">
+                                {{ prediction.get_risk_level_display }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if prediction.prediction %}
+                            <span class="text-danger"><i class="fas fa-exclamation-triangle"></i> Yes</span>
+                            {% else %}
+                            <span class="text-success"><i class="fas fa-check"></i> No</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar 
+                                    {% if prediction.probability_flood > 0.7 %}bg-danger
+                                    {% elif prediction.probability_flood > 0.4 %}bg-warning
+                                    {% else %}bg-success{% endif %}" 
+                                    role="progressbar" 
+                                    style="width: {{ prediction.flood_probability_percent }}%"
+                                    aria-valuenow="{{ prediction.flood_probability_percent }}" 
+                                    aria-valuemin="0" 
+                                    aria-valuemax="100">
+                                    {{ prediction.flood_probability_percent }}%
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ prediction.confidence_percent }}%</td>
+                        <td>
+                            <a href="{% url 'prediction_detail' prediction.id %}" 
+                               class="btn btn-sm btn-outline-primary" title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if prediction.alerts.exists %}
+                            <span class="badge bg-danger ms-1" title="Has Alerts">
+                                <i class="fas fa-bell"></i>
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-4">
+                            <i class="fas fa-inbox fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No predictions found</p>
+                            <a href="{% url 'index' %}" class="btn btn-primary">
+                                <i class="fas fa-bolt me-1"></i>Make First Prediction
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Export Options -->
+<div class="card shadow mt-4">
+    <div class="card-body text-center">
+        <h6 class="card-title">Export Data</h6>
+        <p class="card-text text-muted">Download prediction history for analysis</p>
+        <button class="btn btn-outline-primary me-2" id="exportCsv">
+            <i class="fas fa-file-csv me-1"></i>Export as CSV
+        </button>
+        <button class="btn btn-outline-success" id="exportJson">
+            <i class="fas fa-file-code me-1"></i>Export as JSON
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Export functionality
+    document.getElementById('exportCsv').addEventListener('click', function() {
+        alert('CSV export functionality would be implemented here');
+        // In a real implementation, this would trigger a download
+    });
+
+    document.getElementById('exportJson').addEventListener('click', function() {
+        alert('JSON export functionality would be implemented here');
+        // In a real implementation, this would trigger a download
+    });
+
+    // Auto-submit form when risk level changes
+    document.getElementById('risk_level').addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %}
