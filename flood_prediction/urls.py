@@ -1,9 +1,8 @@
-# flood_prediction/urls.py
+
 
 from django.urls import path
 from . import views
 
-app_name = 'flood_prediction'
 
 urlpatterns = [
     path('', views.index, name='index'),

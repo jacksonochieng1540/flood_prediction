@@ -5,14 +5,13 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Count, Avg, Q, F
+from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
+from django.contrib.auth.models import User
+from django.db.models import Count, Avg
 from django.core.paginator import Paginator
 from django.db import transaction
 from datetime import timedelta, datetime
-from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.forms import AuthenticationForm
-from django.contrib.auth.models import User
-from django.contrib.auth.forms import UserCreationForm
 import json
 import logging
 import csv
@@ -35,7 +34,7 @@ def login_view(request):
                 login(request, user)
                 messages.success(request, f'Welcome back, {username}!')
                 
-                next_page = request.GET.get('next', 'dashboard')
+                next_page = request.GET.get('next', 'index')  # Fixed: changed 'dashboard' to 'index'
                 return redirect(next_page)
         else:
             messages.error(request, 'Invalid username or password.')
@@ -48,7 +47,7 @@ def logout_view(request):
     """User logout view"""
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
-    return redirect('dashboard')
+    return redirect('index')  # Fixed: changed 'dashboard' to 'index'
 
 def register_view(request):
     """User registration view"""
@@ -58,7 +57,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, f'Account created successfully! Welcome, {user.username}!')
-            return redirect('dashboard')
+            return redirect('index')  # Fixed: changed 'dashboard' to 'index'
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -68,6 +67,7 @@ def register_view(request):
 
 def profile_view(request):
     return render(request, 'flood_prediction/profile.html')
+
 try:
     from .ml_model import EnhancedFloodPredictor
     logger = logging.getLogger(__name__)
@@ -192,7 +192,6 @@ except ImportError as e:
     
     predictor = EnhancedFloodPredictor()
 
-# Rest of your views remain exactly the same...
 def index(request):
     """Enhanced main dashboard"""
     # Get recent statistics

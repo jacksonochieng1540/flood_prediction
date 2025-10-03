@@ -55,49 +55,48 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'index' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:index' %}">
+                               href="{% url 'index' %}">
                                 <i class="fas fa-tachometer-alt me-2"></i>Dashboard
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-white {% if request.resolver_match.url_name == 'predict_flood' %}active{% endif %}" 
-                               href="#prediction-form">
+                            <a class="nav-link text-white" href="#prediction-form">
                                 <i class="fas fa-bolt me-2"></i>Make Prediction
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'prediction_history' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:prediction_history' %}">
+                               href="{% url 'prediction_history' %}">
                                 <i class="fas fa-history me-2"></i>Prediction History
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'alerts_dashboard' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:alerts_dashboard' %}">
+                               href="{% url 'alerts_dashboard' %}">
                                 <i class="fas fa-bell me-2"></i>Alerts
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'analytics_dashboard' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:analytics_dashboard' %}">
+                               href="{% url 'analytics_dashboard' %}">
                                 <i class="fas fa-chart-bar me-2"></i>Analytics
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'feature_importance' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:feature_importance' %}">
+                               href="{% url 'feature_importance' %}">
                                 <i class="fas fa-chart-pie me-2"></i>Feature Importance
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'quick_prediction' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:quick_prediction' %}">
+                               href="{% url 'quick_prediction' %}">
                                 <i class="fas fa-bolt me-2"></i>Quick Predict
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-white {% if request.resolver_match.url_name == 'system_settings' %}active{% endif %}" 
-                               href="{% url 'flood_prediction:system_settings' %}">
+                               href="{% url 'system_settings' %}">
                                 <i class="fas fa-cogs me-2"></i>Settings
                             </a>
                         </li>
@@ -109,10 +108,10 @@
                                 <small class="text-white-50">Logged in as</small>
                                 <p class="text-white mb-1 small"><strong>{{ user.username }}</strong></p>
                                 <div class="btn-group w-100">
-                                    <a href="{% url 'flood_prediction:profile' %}" class="btn btn-sm btn-outline-light">
+                                    <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-light">
                                         <i class="fas fa-user me-1"></i>Profile
                                     </a>
-                                    <a href="{% url 'flood_prediction:logout' %}" class="btn btn-sm btn-outline-light">
+                                    <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light">
                                         <i class="fas fa-sign-out-alt me-1"></i>Logout
                                     </a>
                                 </div>
@@ -121,10 +120,10 @@
                             <div class="px-3">
                                 <small class="text-white-50">Account</small>
                                 <div class="btn-group-vertical w-100 gap-1">
-                                    <a href="{% url 'flood_prediction:login' %}" class="btn btn-sm btn-outline-light">
+                                    <a href="{% url 'login' %}" class="btn btn-sm btn-outline-light">
                                         <i class="fas fa-sign-in-alt me-1"></i>Login
                                     </a>
-                                    <a href="{% url 'flood_prediction:register' %}" class="btn btn-sm btn-outline-light">
+                                    <a href="{% url 'register' %}" class="btn btn-sm btn-outline-light">
                                         <i class="fas fa-user-plus me-1"></i>Register
                                     </a>
                                 </div>
