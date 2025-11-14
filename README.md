@@ -90,7 +90,7 @@ The Flood Prediction System is a Django-based web application that uses machine 
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/flood-prediction-system.git
+git clone https://github.com/jackdonochieng1540/flood-prediction-system.git
 cd flood-prediction-system
 
 # Create virtual environment
