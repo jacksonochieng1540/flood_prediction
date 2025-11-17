@@ -34,7 +34,7 @@ def login_view(request):
                 login(request, user)
                 messages.success(request, f'Welcome back, {username}!')
                 
-                next_page = request.GET.get('next', 'index')  # Fixed: changed 'dashboard' to 'index'
+                next_page = request.GET.get('next', 'index')  
                 return redirect(next_page)
         else:
             messages.error(request, 'Invalid username or password.')
@@ -47,7 +47,7 @@ def logout_view(request):
     """User logout view"""
     logout(request)
     messages.success(request, 'You have been logged out successfully.')
-    return redirect('index')  # Fixed: changed 'dashboard' to 'index'
+    return redirect('index')  
 
 def register_view(request):
     """User registration view"""
@@ -57,7 +57,7 @@ def register_view(request):
             user = form.save()
             login(request, user)
             messages.success(request, f'Account created successfully! Welcome, {user.username}!')
-            return redirect('index')  # Fixed: changed 'dashboard' to 'index'
+            return redirect('index')  
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
@@ -72,15 +72,15 @@ try:
     from .ml_model import EnhancedFloodPredictor
     logger = logging.getLogger(__name__)
     
-    # Initialize predictor
+
     try:
         predictor = EnhancedFloodPredictor()
         model_path = 'flood_prediction/models/flood_model_v2.pkl'
         
-        # Create directory if it doesn't exist
+        
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         
-        # Try to load existing model
+        
         if os.path.exists(model_path):
             predictor.load_model(model_path)
             logger.info("Model loaded successfully")
@@ -97,7 +97,7 @@ try:
         predictor.train_ensemble()
 
 except ImportError as e:
-    # Fallback if ml_model doesn't exist
+
     print(f"Import error: {e}")
     logger = logging.getLogger(__name__)
     
@@ -116,12 +116,12 @@ except ImportError as e:
             }
         
         def predict(self, features):
-            # Simple rule-based fallback prediction
+         
             rainfall = features.get('rainfall_mm', 0)
             water_level = features.get('water_level_m', 0)
             soil_moisture = features.get('soil_moisture_percent', 0)
             
-            # Simple flood prediction logic
+          
             flood_prob = min(0.9, (rainfall / 100) * 0.5 + (water_level / 10) * 0.3 + (soil_moisture / 100) * 0.2)
             
             if flood_prob > 0.7:
@@ -194,17 +194,16 @@ except ImportError as e:
 
 def index(request):
     """Enhanced main dashboard"""
-    # Get recent statistics
+ 
     recent_predictions = PredictionHistory.objects.all().order_by('-created_at')[:10]
     active_alerts = Alert.objects.filter(status='active').order_by('-created_at')[:5]
     
-    # Calculate statistics
     total_predictions = PredictionHistory.objects.count()
     high_risk_count = PredictionHistory.objects.filter(
         risk_level__in=['high', 'critical']
     ).count()
     
-    # Get prediction statistics for the last 7 days
+   
     week_ago = timezone.now() - timedelta(days=7)
     weekly_predictions = PredictionHistory.objects.filter(
         created_at__gte=week_ago
@@ -225,13 +224,13 @@ def index(request):
 def predict_flood(request):
     """Enhanced prediction endpoint with database logging"""
     try:
-        # Handle both form data and JSON data
+       
         if request.content_type == 'application/json':
             data = json.loads(request.body)
         else:
             data = request.POST.dict()
         
-        # Extract features with validation
+        
         features = {
             'rainfall_mm': float(data.get('rainfall', 0)),
             'water_level_m': float(data.get('water_level', 0)),
@@ -243,18 +242,17 @@ def predict_flood(request):
             'slope_degree': float(data.get('slope', 0))
         }
         
-        # Validate feature ranges
+     
         validation_errors = validate_features(features)
         if validation_errors:
             return JsonResponse({
                 'success': False,
                 'error': '; '.join(validation_errors)
             }, status=400)
-        
-        # Get prediction with explanation
+    
         result = predictor.explain_prediction(features)
         
-        # Save to database
+       
         prediction_record = PredictionHistory.objects.create(
             rainfall_mm=features['rainfall_mm'],
             water_level_m=features['water_level_m'],
@@ -274,7 +272,6 @@ def predict_flood(request):
             notes=data.get('notes', '')
         )
         
-        # Create alert if high risk
         if result['probability_flood'] > 0.7:
             alert = create_flood_alert(prediction_record, result)
             result['alert_created'] = True
@@ -284,7 +281,7 @@ def predict_flood(request):
         
         logger.info(f"Prediction created: ID={prediction_record.id}, Risk={result['risk_level']}")
         
-        # Return response based on request type
+       
         if request.content_type == 'application/json':
             return JsonResponse({
                 'success': True,
@@ -292,7 +289,7 @@ def predict_flood(request):
                 'prediction_id': prediction_record.id
             })
         else:
-            # For form submissions, redirect to detail page
+          
             messages.success(request, f"Prediction completed! Risk level: {result['risk_level']}")
             return redirect('prediction_detail', prediction_id=prediction_record.id)
         
@@ -335,7 +332,7 @@ def validate_features(features):
 def create_flood_alert(prediction_record, prediction_result):
     """Create flood alert for high-risk predictions"""
     try:
-        # Determine alert message based on risk level
+       
         risk_level = prediction_result['risk_level'].lower()
         if risk_level == 'critical':
             message = f"CRITICAL: Flood imminent with {prediction_result['probability_flood']:.1%} probability. Immediate action required!"
@@ -366,7 +363,7 @@ def prediction_history(request):
     """View prediction history with filtering and pagination"""
     predictions = PredictionHistory.objects.all().order_by('-created_at')
     
-    # Apply filters
+    
     risk_filter = request.GET.get('risk_level')
     date_filter = request.GET.get('date')
     location_filter = request.GET.get('location')
@@ -384,10 +381,10 @@ def prediction_history(request):
     if location_filter:
         predictions = predictions.filter(location__icontains=location_filter)
     
-    # Get unique locations for filter dropdown
+ 
     locations = PredictionHistory.objects.exclude(location='').values_list('location', flat=True).distinct()
     
-    # Pagination
+  
     paginator = Paginator(predictions, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -410,10 +407,10 @@ def prediction_detail(request, prediction_id):
     prediction = get_object_or_404(PredictionHistory, id=prediction_id)
     related_alerts = Alert.objects.filter(prediction=prediction)
     
-    # Get feature importance for display
+
     feature_importance = predictor.get_feature_importance()
     
-    # Prepare feature values for display
+    
     feature_values = {
         'rainfall_mm': prediction.rainfall_mm,
         'water_level_m': prediction.water_level_m,
@@ -439,7 +436,7 @@ def alerts_dashboard(request):
     """Enhanced alerts management dashboard"""
     alerts = Alert.objects.all().order_by('-created_at')
     
-    # Filter by status and severity
+  
     status_filter = request.GET.get('status', 'active')
     severity_filter = request.GET.get('severity')
     
@@ -806,10 +803,7 @@ def export_predictions_csv(request):
 def health_check(request):
     """System health check endpoint"""
     try:
-        # Check database connection
         db_status = PredictionHistory.objects.exists()
-        
-        # Check model status
         model_status = hasattr(predictor, 'is_model_loaded') and predictor.is_model_loaded()
         
         # Check recent errors in logs (simplified)
@@ -846,7 +840,7 @@ def health_check(request):
             'timestamp': timezone.now().isoformat()
         }, status=500)
 
-# Error handlers
+
 def handler404(request, exception):
     if request.content_type == 'application/json':
         return JsonResponse({'error': 'Endpoint not found'}, status=404)
@@ -861,10 +855,7 @@ def handler500(request):
 def quick_prediction(request):
     """Quick prediction form for common scenarios"""
     if request.method == 'POST':
-        # Handle quick prediction form
         scenario = request.POST.get('scenario', 'normal')
-        
-        # Predefined feature sets for common scenarios
         scenarios = {
             'normal': {
                 'rainfall': 15.0, 'water_level': 2.5, 'river_discharge': 120.0,
@@ -887,7 +878,6 @@ def quick_prediction(request):
         features['location'] = f"Quick Prediction - {scenario.replace('_', ' ').title()}"
         features['notes'] = f"Auto-generated quick prediction for {scenario} scenario"
         
-        # Create a mock request for the predict_flood function
         from django.test import RequestFactory
         factory = RequestFactory()
         mock_request = factory.post('/predict/', features)
