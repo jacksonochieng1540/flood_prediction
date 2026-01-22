@@ -1,4 +1,4 @@
-# 🌊 Flood Prediction System
+# Flood Prediction System
 
 <div align="center">
 
@@ -14,7 +14,7 @@
 
 </div>
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#-overview)
 - [Features](#-features)
@@ -30,7 +30,7 @@
 - [Contributing](#-contributing)
 - [License](#-license)
 
-## 🎯 Overview
+##  Overview
 
 The Flood Prediction System is a Django-based web application that uses machine learning to predict flood risks in real-time. The system analyzes various environmental factors to provide early warnings and risk assessments for flood-prone areas.
 
@@ -69,7 +69,7 @@ The Flood Prediction System is a Django-based web application that uses machine 
 - **Admin Interface** for system management
 - **Health Monitoring** and system status checks
 
-## 🖼️ Screenshots
+## Screenshots
 
 | Dashboard | Prediction Interface | Analytics |
 |-----------|---------------------|-----------|
@@ -79,7 +79,7 @@ The Flood Prediction System is a Django-based web application that uses machine 
 |-------------------|-------------------|-------------|
 | ![Alerts](https://via.placeholder.com/400x250/DC2626/FFFFFF?text=Alerts+Dashboard) | ![Features](https://via.placeholder.com/400x250/7C3AED/FFFFFF?text=Feature+Analysis) | ![Mobile](https://via.placeholder.com/400x250/475569/FFFFFF?text=Mobile+Responsive) |
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Prerequisites
 - Python 3.8+
