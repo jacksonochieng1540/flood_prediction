@@ -42,27 +42,27 @@ The Flood Prediction System is a Django-based web application that uses machine 
 - **Analytics Dashboard**: Comprehensive data visualization and insights
 - **Multi-user Support**: Role-based access control and user management
 
-## ✨ Features
+## Features
 
-### 🔮 Prediction & Analysis
+### Prediction & Analysis
 - **Real-time Flood Prediction** using ensemble ML models
 - **Feature Importance Analysis** to understand key risk factors
 - **Batch Prediction** for multiple locations simultaneously
 - **Historical Data Tracking** with outcome verification
 
-### 🚨 Alert Management
+###  Alert Management
 - **Automated Alert Generation** for high-risk predictions
 - **Multi-level Severity** (Low, Moderate, High, Critical)
 - **Alert Resolution Tracking** with user accountability
 - **Real-time Notification System**
 
-### 📊 Dashboard & Analytics
+### Dashboard & Analytics
 - **Interactive Dashboard** with key metrics and statistics
 - **Risk Distribution Charts** and trend analysis
 - **Model Performance Monitoring**
 - **Export Capabilities** (CSV, Reports)
 
-### 🔧 System Features
+### System Features
 - **User Authentication & Authorization**
 - **RESTful API** for integration
 - **Responsive Design** for mobile and desktop
