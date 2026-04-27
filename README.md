@@ -112,6 +112,5 @@ python manage.py createsuperuser
 
 # Train the ML model
 python manage.py train_model
-
-# Start development server
-python manage.py runserver
+#start the django server
+Next you can stary the development  server 
