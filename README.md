@@ -69,15 +69,6 @@ The Flood Prediction System is a Django-based web application that uses machine 
 - **Admin Interface** for system management
 - **Health Monitoring** and system status checks
 
-## Screenshots
-
-| Dashboard | Prediction Interface | Analytics |
-|-----------|---------------------|-----------|
-| ![Dashboard](https://via.placeholder.com/400x250/4F46E5/FFFFFF?text=Dashboard+View) | ![Prediction](https://via.placeholder.com/400x250/10B981/FFFFFF?text=Prediction+Form) | ![Analytics](https://via.placeholder.com/400x250/F59E0B/FFFFFF?text=Analytics+View) |
-
-| Alerts Management | Feature Importance | Mobile View |
-|-------------------|-------------------|-------------|
-| ![Alerts](https://via.placeholder.com/400x250/DC2626/FFFFFF?text=Alerts+Dashboard) | ![Features](https://via.placeholder.com/400x250/7C3AED/FFFFFF?text=Feature+Analysis) | ![Mobile](https://via.placeholder.com/400x250/475569/FFFFFF?text=Mobile+Responsive) |
 
 ##  Quick Start
 
