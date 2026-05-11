@@ -1,35 +1,5 @@
 # Flood Prediction System
 
-<div align="center">
-
-![Django](https://img.shields.io/badge/Django-5.0-green?style=for-the-badge&logo=django)
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=for-the-badge&logo=python)
-![Machine Learning](https://img.shields.io/badge/ML-Random%20Forest-orange?style=for-the-badge&logo=scikit-learn)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue?style=for-the-badge&logo=postgresql)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
-
-*A real-time flood prediction and monitoring system powered by machine learning*
-
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [API](#-api) • [ML Model](#-machine-learning-model) • [Contributing](#-contributing)
-
-</div>
-
-##  Table of Contents
-
-- [Overview](#-overview)
-- [Features](#-features)
-- [Screenshots](#-screenshots)
-- [Quick Start](#-quick-start)
-- [Installation](#-installation)
-- [Configuration](#-configuration)
-- [Usage](#-usage)
-- [Machine Learning Model](#-machine-learning-model)
-- [API Documentation](#-api-documentation)
-- [Development](#-development)
-- [Deployment](#-deployment)
-- [Contributing](#-contributing)
-- [License](#-license)
-
 ##  Overview
 
 The Flood Prediction System is a Django-based web application that uses machine learning to predict flood risks in real-time. The system analyzes various environmental factors to provide early warnings and risk assessments for flood-prone areas.
