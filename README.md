@@ -47,7 +47,6 @@ The Flood Prediction System is a Django-based web application that uses machine 
 - PostgreSQL 12+
 - Redis (for caching and Celery)
 
-### 5-Minute Setup
 
 ```bash
 # Clone the repository
