@@ -15,7 +15,7 @@ from datetime import timedelta, datetime
 import json
 import logging
 import csv
-import os
+import os    
 
 from .models import (
     PredictionHistory, Alert, Location, 
