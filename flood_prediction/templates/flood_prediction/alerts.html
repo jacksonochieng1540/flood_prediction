@@ -14,7 +14,6 @@
 {% endblock %}
 
 {% block content %}
-<!-- Statistics Cards -->
 <div class="row mb-4">
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-left-primary shadow h-100 py-2">
@@ -89,7 +88,6 @@
     </div>
 </div>
 
-<!-- Filters -->
 <div class="card shadow mb-4">
     <div class="card-body">
         <form method="get" class="row g-3">
@@ -124,7 +122,6 @@
     </div>
 </div>
 
-<!-- Alerts Table -->
 <div class="card shadow">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Alerts List</h6>
@@ -211,7 +208,6 @@
     </div>
 </div>
 
-<!-- Bulk Actions -->
 {% if user.is_authenticated %}
 <div class="card shadow mt-4">
     <div class="card-body">
@@ -232,7 +228,6 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Resolve individual alert
     document.querySelectorAll('.resolve-alert').forEach(button => {
         button.addEventListener('click', function() {
             const alertId = this.getAttribute('data-alert-id');
@@ -242,15 +237,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Resolve all active alerts
+
     document.getElementById('resolveAllActive').addEventListener('click', function() {
         if (confirm('Are you sure you want to resolve all active alerts?')) {
-            // This would typically make an API call to resolve all alerts
             alert('Bulk resolve functionality would be implemented here');
         }
     });
 
-    // Export alerts
+
     document.getElementById('exportAlerts').addEventListener('click', function() {
         alert('Export functionality would be implemented here');
     });
@@ -267,7 +261,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload(); // Reload to show updated status
+                location.reload(); 
             } else {
                 alert('Error resolving alert: ' + data.error);
             }
@@ -278,7 +272,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Auto-submit form when filters change
     document.getElementById('status').addEventListener('change', function() {
         this.form.submit();
     });
